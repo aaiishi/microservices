@@ -1,0 +1,84 @@
+services:
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - auction-network
+
+  auth-gateway:
+    build:
+      context: ./auth-gateway
+      dockerfile: Dockerfile
+    container_name: auth-gateway
+    env_file:
+      - ./auth-gateway/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - user-service
+      - auction-service
+      - bid-service
+    networks:
+      - auction-network
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    env_file:
+      - ./user-service/.env
+    ports:
+      - "3001:3001"
+    depends_on:
+      - mongo
+    networks:
+      - auction-network
+
+  auction-service:
+    build:
+      context: ./auction-service
+      dockerfile: Dockerfile
+    container_name: auction-service
+    env_file:
+      - ./auction-service/.env
+    ports:
+      - "3002:3002"
+    depends_on:
+      - mongo
+    networks:
+      - auction-network
+
+  bid-service:
+    build:
+      context: ./bid-service
+      dockerfile: Dockerfile
+    container_name: bid-service
+    env_file:
+      - ./bid-service/.env
+    ports:
+      - "3003:3003"
+    depends_on:
+      - mongo
+    networks:
+      - auction-network
+
+  web-client:
+    build:
+      context: ./web-client
+      dockerfile: Dockerfile
+    container_name: web-client
+    ports:
+      - "8080:80"
+    networks:
+      - auction-network
+
+volumes:
+  mongo_data:
+
+networks:
+  auction-network:
+    driver: bridge
